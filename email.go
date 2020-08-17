@@ -47,6 +47,8 @@ type Email struct {
 	Subject     string
 	Text        []byte // Plaintext message (optional)
 	HTML        []byte // Html message (optional)
+	ICS         []byte //
+	ICSMethod   string //
 	Sender      string // override From as SMTP envelope sender (optional)
 	Headers     textproto.MIMEHeader
 	Attachments []*Attachment
@@ -468,6 +470,12 @@ func (e *Email) Bytes() ([]byte, error) {
 				}
 
 				relatedWriter.Close()
+			}
+		}
+		if len(e.ICS) > 0 {
+			// Write the text
+			if err := writeMessage(buff, e.ICS, isMixed || isAlternative, fmt.Sprintf("text/calendar; method=%s", e.ICSMethod), subWriter); err != nil {
+				return nil, err
 			}
 		}
 		if isMixed && isAlternative {
