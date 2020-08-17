@@ -286,7 +286,9 @@ func (e *Email) AttachFile(filename string) (a *Attachment, err error) {
 	if err != nil {
 		return
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	ct := mime.TypeByExtension(filepath.Ext(filename))
 	basename := filepath.Base(filename)
@@ -350,19 +352,21 @@ func writeMessage(buff io.Writer, msg []byte, multipart bool, mediaType string, 
 	if multipart {
 		header := textproto.MIMEHeader{
 			"Content-Type":              {mediaType + "; charset=UTF-8"},
-			"Content-Transfer-Encoding": {"quoted-printable"},
+			"Content-Transfer-Encoding": {"base64"},
 		}
 		if _, err := w.CreatePart(header); err != nil {
 			return err
 		}
 	}
 
-	qp := quotedprintable.NewWriter(buff)
+	//qp := quotedprintable.NewWriter(buff)
 	// Write the text
-	if _, err := qp.Write(msg); err != nil {
-		return err
-	}
-	return qp.Close()
+	base64Wrap(buff, msg)
+	return nil
+	//if _, err := qp.Write(msg); err != nil {
+		//return err
+	//}
+	//return qp.Close()
 }
 
 func (e *Email) categorizeAttachments() (htmlRelated, others []*Attachment) {
