@@ -39,6 +39,7 @@ var ErrMissingContentType = errors.New("No Content-Type found for MIME entity")
 
 // Email is the type used for email messages
 type Email struct {
+	Helo        string
 	ReplyTo     []string
 	From        string
 	To          []string
@@ -364,7 +365,7 @@ func writeMessage(buff io.Writer, msg []byte, multipart bool, mediaType string, 
 	base64Wrap(buff, msg)
 	return nil
 	//if _, err := qp.Write(msg); err != nil {
-		//return err
+	//return err
 	//}
 	//return qp.Close()
 }
@@ -588,10 +589,15 @@ func (e *Email) SendWithTLS(addr string, a smtp.Auth, t *tls.Config) error {
 		return err
 	}
 	defer c.Close()
-	if err = c.Hello("localhost"); err != nil {
+	var helo string
+	if e.Helo != "" {
+		helo = e.Helo
+	} else {
+		helo = "localhost"
+	}
+	if err = c.Hello(helo); err != nil {
 		return err
 	}
-
 	if a != nil {
 		if ok, _ := c.Extension("AUTH"); ok {
 			if err = c.Auth(a); err != nil {
