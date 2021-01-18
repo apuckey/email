@@ -663,7 +663,13 @@ func (e *Email) SendWithStartTLS(addr string, a smtp.Auth, t *tls.Config) error 
 		return err
 	}
 	defer c.Close()
-	if err = c.Hello("localhost"); err != nil {
+	var helo string
+	if e.Helo != "" {
+		helo = e.Helo
+	} else {
+		helo = "localhost"
+	}
+	if err = c.Hello(helo); err != nil {
 		return err
 	}
 	// Use TLS if available
